@@ -41,6 +41,7 @@
     format))
 
 (defn read-file
+  "Lazily read a dataset file into a vector of vectors"
   [path & {:keys [sep format stat] :or {sep #"," format "txt" stat false}}]
   (let [format (infer-format path)]
     (if (.contains ["csv" "txt" "dat" nil] format)
