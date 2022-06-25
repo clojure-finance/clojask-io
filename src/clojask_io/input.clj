@@ -25,7 +25,7 @@
         data (if (= wrap nil)
                data
                (let [wrap-len (count wrap)]
-                 (map #(map
+                 (map #(mapv
                         (fn [value]
                           (let [value (if (and (str/ends-with? value wrap) (str/starts-with? value wrap))
                                         (subs value wrap-len (- (count value) wrap-len))
@@ -50,19 +50,29 @@
         format (if (not= index nil) (subs path (inc (str/last-index-of path "."))) nil)]
     format))
 
+(def format-sep-map {"csv" ","
+                     "txt" ", "
+                     "dat" " +"
+                     "tsv" "\t"})
+
 (defn read-file
   "Lazily read a dataset file into a vector of vectors"
-  [path & {:keys [sep format stat wrap] :or {sep #"," format nil stat false wrap nil}}]
-  (let [format (or format (infer-format path))]
+  [path & {:keys [sep format stat wrap] :or {sep nil format nil stat false wrap nil}}]
+  (let [format (or format (infer-format path))
+        sep (or sep (get format-sep-map format) ",")]
     (if (.contains ["piquet" "xls" "xlsx" "dta"] format)
       ;; not supported type
       (do
-        (println (str "ERROR: The file type " format " is not supported."))
+        (throw (Exception. (str "ERROR: The file type " format " is not supported.")))
         nil)
       ;; ["csv" "txt" "dat" "tsv" "tab" nil]
-      (do
+      (try
+        (do
         (if (or (= format nil) (not (.contains ["csv" "txt" "dat" "tsv" "tab"] format))) (println "WARNING: The format of the file cannot be inferred. Use \"csv\" by default"))
         (if (or (str/starts-with? path "https://") (str/starts-with? path "http://"))
           (csv-online path :sep sep :stat stat :wrap wrap)
-          (csv-local path :sep sep :stat stat :wrap wrap)))))
+          (csv-local path :sep sep :stat stat :wrap wrap)))
+        (catch Exception e 
+          (do
+            (throw (Exception. (println "Error in decoding the file. Make sure you specified the correct seperator.") e)))))))
   )

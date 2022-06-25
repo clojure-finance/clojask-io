@@ -4,5 +4,7 @@
   :license {:name "MIT"
             :url "https://github.com/clojure-finance/clojask-io/blob/main/LICENSE"}
   :dependencies [[org.clojure/clojure "1.10.1"]
-                 [clojure-interop/java.net "1.0.5"]]
+                 [clojure-interop/java.net "1.0.5"]
+                 [com.netflix.pigpen/pigpen "0.3.3"]
+                 [com.netflix.pigpen/pigpen-parquet-pig "0.3.3"]]
   :repl-options {:init-ns clojask-io.core})
