@@ -33,8 +33,8 @@
                             value))
                         %) data)))]
     (if stat
-      {:data (fn [] data) :size (.length (io/file path))}
-      (fn [] data))))
+      {:data data :size (.length (io/file path))}
+      data)))
 
 (defn csv-online
   [path & {:keys [sep stat wrap] :or {sep #"," stat false wrap nil}}]
@@ -63,7 +63,7 @@
     (if (.contains ["piquet" "xls" "xlsx" "dta"] format)
       ;; not supported type
       (do
-        (throw (Exception. (str "ERROR: The file type " format " is not supported.")))
+        (throw (Exception. (str "ERROR: The file format " format " is not supported.")))
         nil)
       ;; ["csv" "txt" "dat" "tsv" "tab" nil]
       (try
