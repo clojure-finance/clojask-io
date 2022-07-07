@@ -2,7 +2,8 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [jdk.net.URL :refer [->url open-connection]]
-            [jdk.net.URLConnection :refer [get-content-length]]))
+            [jdk.net.URLConnection :refer [get-content-length]]
+            [clojask-io.output :refer :all]))
 
 
 (defn get-online-size
@@ -34,13 +35,13 @@
                         %) data)))]
     (if stat
       {:data data :size (.length (io/file path))}
-      data)))
+      {:data data})))
 
 (defn csv-online
   [path & {:keys [sep stat wrap] :or {sep #"," stat false wrap nil}}]
   (let [data (csv-local path :sep sep :stat false :wrap wrap)]
     (if stat
-      {:data data :size (get-online-size path)}
+      (assoc data :size (get-online-size path))
       data)))
 
 (defn infer-format
@@ -57,7 +58,7 @@
 
 (defn read-file
   "Lazily read a dataset file into a vector of vectors"
-  [path & {:keys [sep format stat wrap] :or {sep nil format nil stat false wrap nil}}]
+  [path & {:keys [sep format stat wrap output] :or {sep nil format nil stat false wrap nil output false}}]
   (let [format (or format (infer-format path))
         sep (or sep (get format-sep-map format) ",")]
     (if (.contains ["piquet" "xls" "xlsx" "dta"] format)
@@ -70,8 +71,12 @@
         (do
         (if (or (= format nil) (not (.contains ["csv" "txt" "dat" "tsv" "tab"] format))) (println "WARNING: The format of the file cannot be inferred. Use \"csv\" by default"))
         (if (or (str/starts-with? path "https://") (str/starts-with? path "http://"))
-          (csv-online path :sep sep :stat stat :wrap wrap)
-          (csv-local path :sep sep :stat stat :wrap wrap)))
+          (if output 
+            (assoc (csv-online path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
+            (csv-online path :sep sep :stat stat :wrap wrap))
+          (if output
+            (assoc (csv-local path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
+            (csv-local path :sep sep :stat stat :wrap wrap))))
         (catch Exception e 
           (do
             (throw (Exception. (println "Error in decoding the file. Make sure you specified the correct seperator.") e)))))))
