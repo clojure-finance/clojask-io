@@ -34,8 +34,8 @@
                             value))
                         %) data)))]
     (if stat
-      {:data data :size (.length (io/file path))}
-      {:data data})))
+      {:clojask-io true :data data :size (.length (io/file path))}
+      {:clojask-io true :data data})))
 
 (defn csv-online
   [path & {:keys [sep stat wrap] :or {sep #"," stat false wrap nil}}]
