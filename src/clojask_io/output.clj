@@ -8,3 +8,8 @@
   (doseq [row seq]
     (.write writer (str (str/join sep row) "\n"))
     ))
+
+;; (defn write-vec
+;;   "output to a vector using sequential vector of vectors"
+;;   [writer seq sep]
+;;   )

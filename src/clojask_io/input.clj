@@ -3,10 +3,11 @@
             [clojure.string :as str]
             [jdk.net.URL :refer [->url open-connection]]
             [jdk.net.URLConnection :refer [get-content-length]]
-            [clojask-io.output :refer :all]))
+            [clojask-io.output :refer :all]
+            [dk.ative.docjure.spreadsheet :as excel]))
 
 
-(defn get-online-size
+(defn- get-online-size
   "get the size of the response file"
   [url]
   (try
@@ -15,6 +16,11 @@
       (get-content-length conn))
     (catch Exception e nil))
   )
+
+
+(defn- get-local-size
+  [path]
+  (.length (io/file path)))
 
 (defn csv-local
   "read in a local csv dataset"
@@ -34,7 +40,7 @@
                             value))
                         %) data)))]
     (if stat
-      {:clojask-io true :data data :size (.length (io/file path))}
+      {:clojask-io true :data data :size (get-local-size path)}
       {:clojask-io true :data data})))
 
 (defn csv-online
@@ -44,7 +50,7 @@
       (assoc data :size (get-online-size path))
       data)))
 
-(defn infer-format
+(defn- infer-format
   "infer the file format from a path"
   [path]
   (let [index (str/last-index-of path ".")
@@ -56,28 +62,69 @@
                      "dat" " +"
                      "tsv" "\t"})
 
+(defn- is-online
+  [path]
+  (or (str/starts-with? path "https://") (str/starts-with? path "http://")))
+
 (defn read-file
-  "Lazily read a dataset file into a vector of vectors"
+  "Lazily read a dataset file (csv, txt, dat, tsv, tab) into a vector of vectors"
   [path & {:keys [sep format stat wrap output] :or {sep nil format nil stat false wrap nil output false}}]
   (let [format (or format (infer-format path))
         sep (or sep (get format-sep-map format) ",")]
-    (if (.contains ["piquet" "xls" "xlsx" "dta"] format)
+    (if (.contains ["piquet" "dta"] format)
       ;; not supported type
       (do
         (throw (Exception. (str "ERROR: The file format " format " is not supported.")))
         nil)
       ;; ["csv" "txt" "dat" "tsv" "tab" nil]
       (try
-        (do
-        (if (or (= format nil) (not (.contains ["csv" "txt" "dat" "tsv" "tab"] format))) (println "WARNING: The format of the file cannot be inferred. Use \"csv\" by default"))
-        (if (or (str/starts-with? path "https://") (str/starts-with? path "http://"))
-          (if output 
-            (assoc (csv-online path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
-            (csv-online path :sep sep :stat stat :wrap wrap))
-          (if output
-            (assoc (csv-local path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
-            (csv-local path :sep sep :stat stat :wrap wrap))))
+        (if (.contains ["xls" "xlsx"] format)
+          (do
+            (throw (Exception. (str "ERROR: The file format " format " is not supported. Please try using function read-excel.")))
+            nil)
+         (do
+           (if (or (= format nil) (not (.contains ["csv" "txt" "dat" "tsv" "tab"] format))) (println "WARNING: The format of the file cannot be inferred. Use \"csv\" by default"))
+           (if (or (is-online path))
+             (if output
+               (assoc (csv-online path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
+               (csv-online path :sep sep :stat stat :wrap wrap))
+             (if output
+               (assoc (csv-local path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
+               (csv-local path :sep sep :stat stat :wrap wrap)))))
         (catch Exception e 
           (do
-            (throw (Exception. (println "Error in decoding the file. Make sure you specified the correct seperator.") e)))))))
+            (throw (Exception. "Error in decoding the file. Make sure you specified the correct seperator." e)))))))
   )
+
+(defn excel-local
+  [path sheet stat]
+  (let [data (->> (excel/load-workbook path)
+                  (excel/select-sheet sheet)
+                  (excel/row-seq)
+                  (remove nil?)
+                  (map excel/cell-seq)
+                  (map #(map excel/read-cell %)))]
+    (if stat
+      {:data data :stat (get-local-size path)}
+      {:data data})))
+
+(defn excel-online
+  [path sheet stat]
+  (let [url (->url path)
+        data (with-open [stream (io/input-stream url)]
+               (->> (excel/load-workbook stream)
+                    (excel/select-sheet sheet)
+                    (excel/row-seq)
+                    (remove nil?)
+                    (map excel/cell-seq)
+                    (map #(map excel/read-cell %))))]
+    (if stat
+      {:data data :stat (get-online-size path)}
+      {:data data})))
+
+(defn read-excel
+  "Read an excel sheet as a vector of vectors (not lazy)"
+  [path sheet & {:keys [stat] :or {stat false}}]
+  (if (is-online path)
+    (excel-online path sheet stat)
+    (excel-local path sheet stat)))
