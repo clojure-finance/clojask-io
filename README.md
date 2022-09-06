@@ -14,7 +14,7 @@ Available on Clojars: [![Clojars Project](https://img.shields.io/clojars/v/com.g
 
 Read in a file as lazy sequence. Optionally, provide size of the file, corresponding output functions.
 
-*Supported file types: **csv, txt, dat, tsv, tab**.* 
+*Supported file types: **csv, txt, dat, tsv, tab**. The file size can be larger than memory.* 
 
 | Argument   | Type                                     | Function                                                     | Remarks                                                      |
 | ---------- | ---------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -35,7 +35,7 @@ Read in a file as lazy sequence. Optionally, provide size of the file, correspon
 
 Read in an excel file as lazy sequence. Optionally, provide size of the file.
 
-*A simplified wrapper function of [Docjure](https://github.com/mjul/docjure).* 
+*A simplified wrapper function of [Docjure](https://github.com/mjul/docjure). The excel file should be smaller than memory size.* 
 
 | Argument | Type    | Function                                                     | Remarks                                                      |
 | -------- | ------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
