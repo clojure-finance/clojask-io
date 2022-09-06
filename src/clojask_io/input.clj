@@ -50,7 +50,7 @@
       (assoc data :size (get-online-size path))
       data)))
 
-(defn- infer-format
+(defn infer-format
   "infer the file format from a path"
   [path]
   (let [index (str/last-index-of path ".")
@@ -60,7 +60,8 @@
 (def format-sep-map {"csv" ","
                      "txt" ", "
                      "dat" " +"
-                     "tsv" "\t"})
+                     "tsv" "\t"
+                     "tab" "\t"})
 
 (defn- is-online
   [path]
@@ -105,8 +106,8 @@
                   (map excel/cell-seq)
                   (map #(map excel/read-cell %)))]
     (if stat
-      {:data data :stat (get-local-size path)}
-      {:data data})))
+      {:clojask-io true :data data :stat (get-local-size path)}
+      {:clojask-io true :data data})))
 
 (defn excel-online
   [path sheet stat]
@@ -119,8 +120,8 @@
                     (map excel/cell-seq)
                     (map #(map excel/read-cell %))))]
     (if stat
-      {:data data :stat (get-online-size path)}
-      {:data data})))
+      {:clojask-io true :data data :stat (get-online-size path)}
+      {:clojask-io true :data data})))
 
 (defn read-excel
   "Read an excel sheet as a vector of vectors (not lazy)"

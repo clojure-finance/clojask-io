@@ -14,6 +14,8 @@ Available on Clojars: [![Clojars Project](https://img.shields.io/clojars/v/com.g
 
 Read in a file as lazy sequence. Optionally, provide size of the file, corresponding output functions.
 
+*Supported file types: **csv, txt, dat, tsv, tab**.* 
+
 | Argument   | Type                                     | Function                                                     | Remarks                                                      |
 | ---------- | ---------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | `path`     | String                                   | Indicates where to find the file (either on local machine or online) | - For local files, absolute / relative path of the file<br />- For online resources, url of the resources |
@@ -26,6 +28,38 @@ Read in a file as lazy sequence. Optionally, provide size of the file, correspon
 **Return**
 
 {:data `a lazy sequence of vectors representing each row` [:size `the size in byte`] [:output `output function`]}
+
+
+
+#### `read-excel`
+
+Read in an excel file as lazy sequence. Optionally, provide size of the file.
+
+*A simplified wrapper function of [Docjure](https://github.com/mjul/docjure).* 
+
+| Argument | Type    | Function                                                     | Remarks                                                      |
+| -------- | ------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `path`   | String  | Indicates where to find the file (either on local machine or online) | - For local files, absolute / relative path of the file<br />- For online resources, url of the resources |
+| `sheet`  | String  | Name                                                         |                                                              |
+| [`stat`] | Boolean | Whether to get the size of the file                          | If true, the return value will add a :size key-value pair in unit of bytes. Size value will be `nil` if cannot be retrieved. |
+
+**Return**
+
+{:data `a lazy sequence of vectors representing each row` [:size `the size in byte`]}
+
+
+
+#### `infer-format`
+
+Infer the file format from the path (get the substring after the last `.`).
+
+| Argument | Type   | Function                                                     | Remarks                                                      |
+| -------- | ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `path`   | String | Indicates where to find the file (either on local machine or online) | - For local files, absolute / relative path of the file<br />- For online resources, url of the resources |
+
+**Return**
+
+String, such as "csv", "xls" (`nil` if fails to infer)
 
 
 
