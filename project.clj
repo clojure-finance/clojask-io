@@ -8,4 +8,4 @@
                  [dk.ative/docjure "1.18.0"]
                  [com.netflix.pigpen/pigpen "0.3.3"]
                  [com.netflix.pigpen/pigpen-parquet-pig "0.3.3"]]
-  :repl-options {:init-ns clojask-io.core})
+  :repl-options {:init-ns clojask-io.debug})

@@ -4,6 +4,7 @@
             [jdk.net.URL :refer [->url open-connection]]
             [jdk.net.URLConnection :refer [get-content-length]]
             [clojask-io.output :refer :all]
+            [clojask-io.core :refer :all]
             [dk.ative.docjure.spreadsheet :as excel]))
 
 
@@ -50,19 +51,6 @@
       (assoc data :size (get-online-size path))
       data)))
 
-(defn infer-format
-  "infer the file format from a path"
-  [path]
-  (let [index (str/last-index-of path ".")
-        format (if (not= index nil) (subs path (inc (str/last-index-of path "."))) nil)]
-    format))
-
-(def format-sep-map {"csv" ","
-                     "txt" ", "
-                     "dat" " +"
-                     "tsv" "\t"
-                     "tab" "\t"})
-
 (defn- is-online
   [path]
   (or (str/starts-with? path "https://") (str/starts-with? path "http://")))
@@ -78,23 +66,24 @@
         (throw (Exception. (str "ERROR: The file format " format " is not supported.")))
         nil)
       ;; ["csv" "txt" "dat" "tsv" "tab" nil]
-      (try
-        (if (.contains ["xls" "xlsx"] format)
-          (do
-            (throw (Exception. (str "ERROR: The file format " format " is not supported. Please try using function read-excel.")))
-            nil)
-         (do
-           (if (or (= format nil) (not (.contains ["csv" "txt" "dat" "tsv" "tab"] format))) (println "WARNING: The format of the file cannot be inferred. Use \"csv\" by default"))
-           (if (or (is-online path))
-             (if output
-               (assoc (csv-online path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
-               (csv-online path :sep sep :stat stat :wrap wrap))
-             (if output
-               (assoc (csv-local path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
-               (csv-local path :sep sep :stat stat :wrap wrap)))))
-        (catch Exception e 
-          (do
-            (throw (Exception. "Error in decoding the file. Make sure you specified the correct seperator." e)))))))
+      ;; (try
+      (if (.contains excel-format format)
+        (do
+          (throw (Exception. (str "ERROR: The file format " format " is not supported. Please try using function read-excel.")))
+          nil)
+        (do
+          (if (or (= format nil) (not (.contains gen-format format))) (println "WARNING: The format of the file cannot be inferred. Use \"csv\" by default"))
+          (if (or (is-online path))
+            (if output
+              (assoc (csv-online path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
+              (csv-online path :sep sep :stat stat :wrap wrap))
+            (if output
+              (assoc (csv-local path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
+              (csv-local path :sep sep :stat stat :wrap wrap)))))
+        ;; (catch Exception e 
+        ;;   (do
+        ;;     (throw (Exception. "Error in decoding the file. Make sure you specified the correct seperator." e)))))
+      ))
   )
 
 (defn excel-local
@@ -124,7 +113,8 @@
       {:clojask-io true :data data})))
 
 (defn read-excel
-  "Read an excel sheet as a vector of vectors (not lazy)"
+  "Read an excel sheet as a vector of vectors (not lazy).\n
+   More specified input can be found in https://github.com/mjul/docjure ."
   [path sheet & {:keys [stat] :or {stat false}}]
   (if (is-online path)
     (excel-online path sheet stat)
