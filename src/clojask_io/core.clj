@@ -14,7 +14,7 @@
 (def excel-format ["xls" "xlsx"])
 
 (defn infer-format
-  "infer the file format from a path"
+  "infer the file format from a path, otherwise return nil"
   [path]
   (let [index (str/last-index-of path ".")
         format (if (not= index nil) (subs path (inc (str/last-index-of path "."))) nil)]

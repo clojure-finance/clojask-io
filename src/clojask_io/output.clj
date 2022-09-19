@@ -13,12 +13,13 @@
 
 (defn get-output-func
   "get the corresponding output function based on the file format"
-  [path]
-  (let [format (infer-format path)]
+  [format]
+  (let []
     (cond
       (.contains (keys format-sep-map) format) (fn [wtr seq] (write-csv wtr seq (get format-sep-map format)))
       (.contains ["xls" "xlsx"] format) nil
-      :else  (fn [wtr seq] (write-csv wtr seq (get format-sep-map "csv"))))))
+      (= format nil) (fn [wtr seq] (write-csv wtr seq (get format-sep-map "csv")))
+      :else (fn [wtr seq] (write-csv wtr seq (get format-sep-map "csv"))))))
 
 (defn write-excel
   "Create an excel file and write the vectors to it."
