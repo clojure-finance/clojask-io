@@ -11,16 +11,6 @@
     (.write writer (str (str/join sep row) "\n"))
     ))
 
-(defn get-output-func
-  "get the corresponding output function based on the file format"
-  [format]
-  (let []
-    (cond
-      (.contains (keys format-sep-map) format) (fn [wtr seq] (write-csv wtr seq (get format-sep-map format)))
-      (.contains ["xls" "xlsx"] format) nil
-      (= format nil) (fn [wtr seq] (write-csv wtr seq (get format-sep-map "csv")))
-      :else (fn [wtr seq] (write-csv wtr seq (get format-sep-map "csv"))))))
-
 (defn write-excel
   "Create an excel file and write the vectors to it."
   [path sheet doc]
@@ -37,3 +27,14 @@
 ;;   "output to a vector using sequential vector of vectors"
 ;;   [writer seq sep]
 ;;   )
+
+;; ======  deprecated ======
+(defn get-output-func
+  "get the corresponding output function based on the file format"
+  [format]
+  (let []
+    (cond
+      (.contains (keys format-sep-map) format) (fn [wtr seq] (write-csv wtr seq (get format-sep-map format)))
+      (.contains ["xls" "xlsx"] format) nil
+      (= format nil) (fn [wtr seq] (write-csv wtr seq (get format-sep-map "csv")))
+      :else (fn [wtr seq] (write-csv wtr seq (get format-sep-map "csv"))))))

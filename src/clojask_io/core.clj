@@ -1,8 +1,9 @@
 (ns clojask-io.core
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [pigpen.core :as pig]
-            [pigpen.parquet :as pqt]))
+            ;; [pigpen.core :as pig]
+            ;; [pigpen.parquet :as pqt]
+            ))
 
 (def format-sep-map {"csv" ","
                      "txt" ", "
@@ -27,4 +28,8 @@
 (defn is-excel
   [path]
   (.contains excel-format (infer-format path)))
+
+(defn supports
+  [format]
+  (or (is-general format) (is-excel format)))
 

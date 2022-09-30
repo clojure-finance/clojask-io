@@ -41,8 +41,8 @@
                             value))
                         %) data)))]
     (if stat
-      {:clojask-io true :data data :size (get-local-size path)}
-      {:clojask-io true :data data})))
+      {:clojask-io true :path path :data data :size (get-local-size path)}
+      {:clojask-io true :path path :data data})))
 
 (defn csv-online
   [path & {:keys [sep stat wrap] :or {sep #"," stat false wrap nil}}]
@@ -95,8 +95,8 @@
                   (map excel/cell-seq)
                   (map #(map excel/read-cell %)))]
     (if stat
-      {:clojask-io true :data data :stat (get-local-size path)}
-      {:clojask-io true :data data})))
+      {:clojask-io true :path path :data data :stat (get-local-size path)}
+      {:clojask-io true :path path :data data})))
 
 (defn excel-online
   [path sheet stat]
@@ -109,8 +109,8 @@
                     (map excel/cell-seq)
                     (map #(map excel/read-cell %))))]
     (if stat
-      {:clojask-io true :data data :stat (get-online-size path)}
-      {:clojask-io true :data data})))
+      {:clojask-io true :path path :data data :stat (get-online-size path)}
+      {:clojask-io true :path path :data data})))
 
 (defn read-excel
   "Read an excel sheet as a vector of vectors (not lazy).\n
