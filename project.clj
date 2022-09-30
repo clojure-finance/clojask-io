@@ -1,4 +1,4 @@
-(defproject com.github.clojure-finance/clojask-io "1.0.5"
+(defproject com.github.clojure-finance/clojask-io "1.0.6"
   :description "A Clojure library designed to extend the file support for Clojask. This library can also be used alone to read in and output dataset files."
   :url "https://clojure-finance.github.io/clojask-website"
   :license {:name "MIT"
