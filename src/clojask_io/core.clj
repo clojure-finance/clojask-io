@@ -31,5 +31,5 @@
 
 (defn supports
   [format]
-  (or (is-general format) (is-excel format)))
+  (or (is-general format) (is-excel format) (= format nil)))
 
