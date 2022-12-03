@@ -5,7 +5,7 @@
             [dk.ative.docjure.spreadsheet :as ds]))
 
 (defn write-csv
-  "output to a csv file using a vector of vectors"
+  "output to a csv file using a collection of collections"
   [writer seq sep]
   (doseq [row seq]
     (.write writer (str (str/join sep row) "\n"))
@@ -20,7 +20,8 @@
         header-row (first (ds/row-seq sheet))]
     ;; (set-row-style! header-row (create-cell-style! wb {:background :yellow,
     ;;                                                    :font {:bold true}}))
-    (ds/save-workbook! path wb))
+    (ds/save-workbook! path wb)
+    nil)
   )
 
 ;; (defn write-vec
