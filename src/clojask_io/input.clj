@@ -23,7 +23,6 @@
   [path]
   (.length (io/file path)))
 
-
 (defn csv-local
   "read in a local csv dataset"
   [path & {:keys [sep stat wrap] :or {sep #"," stat false wrap nil}}]
