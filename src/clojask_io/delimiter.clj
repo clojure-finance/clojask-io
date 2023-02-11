@@ -37,8 +37,7 @@
             (def quote-flag true)
             (def result-vec (conj result-vec item)))))))
   result-vec)
-;; => Syntax error compiling at (c:\Users\Hicco\Desktop\clojask-io\src\clojask_io\delimiter.clj:28:16).
-;;    No such namespace: str
+
 
 
 (defn my-frequencies
