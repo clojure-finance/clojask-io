@@ -60,7 +60,7 @@
   "Lazily read a dataset file (csv, txt, dat, tsv, tab) into a vector of vectors"
   [path & {:keys [sep format stat wrap output] :or {sep nil format nil stat false wrap nil output false}}]
   (let [format (or format (infer-format path))
-        sep (or (clojure-io.delimiter/get-delimiter path) sep (get format-sep-map format) ",")]
+        sep (or (clojask-io.delimiter/get-delimiter path) sep (get format-sep-map format) ",")]
     (if (.contains ["piquet" "dta"] format)
       ;; not supported type
       (do
