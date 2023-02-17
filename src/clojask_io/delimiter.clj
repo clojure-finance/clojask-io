@@ -3,6 +3,19 @@
 (require '[clojure.string :as str]
          '[clojure.java.io])
 
+
+(defn format-delimiter
+  [delimiter]
+  (def result [])
+  (doseq [character (str/split delimiter #"")]
+    (def result (conj result (str "[" character "]" ))))
+  (re-pattern (str/join result)))
+
+;;this function is for formatting delimiters from string into regular expressions to be passed into str/split
+;;eg. (format-delimiter "@!?") will return "[@][!][?]"
+;;this can avoid characters in delimiters such as *, ?, etc. to be interpreted as re symbols, eg.(? as zero or one occurrence of the previous character)
+;;eg. (str/split "123@!?456" #"[@][!][?]") returns ["123" "456"], but (str/split "123@!?456" #"@!?") returns ["123" "?456"]
+
 (defn get-one-string
   [vector-of-str, str-len, start-pos]
   (loop [len-count 0 result [] curr-pos start-pos]
