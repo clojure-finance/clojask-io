@@ -5,6 +5,7 @@
             [jdk.net.URLConnection :refer [get-content-length]]
             [clojask-io.output :refer :all]
             [clojask-io.core :refer :all]
+            [clojask-io.delimiter]
             [dk.ative.docjure.spreadsheet :as excel]))
 
 
@@ -26,7 +27,7 @@
 (defn csv-local
   "read in a local csv dataset"
   [path & {:keys [sep stat wrap] :or {sep #"," stat false wrap nil}}]
-  (let [sep (if (string? sep) (re-pattern sep) sep)
+  (let [sep (if (string? sep) (clojask-io.delimiter/format-delimiter sep) sep)  
         reader (io/reader path)
         data (line-seq reader)
         data (map #(str/split % sep -1) data)
@@ -59,7 +60,7 @@
   "Lazily read a dataset file (csv, txt, dat, tsv, tab) into a vector of vectors"
   [path & {:keys [sep format stat wrap output] :or {sep nil format nil stat false wrap nil output false}}]
   (let [format (or format (infer-format path))
-        sep (or sep (get format-sep-map format) ",")]
+        sep (or sep (clojask-io.delimiter/get-delimiter path) (get format-sep-map format) ",")]
     (if (.contains ["piquet" "dta"] format)
       ;; not supported type
       (do
