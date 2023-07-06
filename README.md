@@ -89,7 +89,7 @@ Synchronously write a collection of collections to a csv-like file.
 | ----------- | ------------------------ | -------------------------------------------- | ------------------------------------------------------------ |
 | `writer`    | `java.io.BufferedWriter` | The writer initialized to the output file    |                                                              |
 | `sequence`  | Collection               | The output content                           | Should a two-dimensional collection                          |
-| `separator` | String                   | The separator between values in the same row | If true, the return value will add a :size key-value pair in unit of bytes. Size value will be `nil` if cannot be retrieved. |
+| `separator` | String                   | The separator between values in the same row |                                                               |
 
 **Implementation**
 
