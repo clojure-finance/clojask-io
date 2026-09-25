@@ -93,6 +93,7 @@
         ;;   (do
         ;;     (throw (Exception. "Error in decoding the file. Make sure you specified the correct seperator." e)))))
       )))
+
 (defn excel-local
   [path sheet stat]
   (let [data (->> (excel/load-workbook path)
