@@ -8,7 +8,6 @@
             [clojask-io.delimiter]
             [dk.ative.docjure.spreadsheet :as excel]))
 
-
 (defn- get-online-size
   "get the size of the response file"
   [url]
@@ -16,20 +15,28 @@
     (let [url (->url url)
           conn (open-connection url)]
       (get-content-length conn))
-    (catch Exception e nil))
-  )
-
+    (catch Exception e nil)))
 
 (defn- get-local-size
   [path]
   (.length (io/file path)))
 
+(defn- closing-line-seq
+  "like line-seq, but closes the reader when the sequence is fully consumed"
+  [^java.io.BufferedReader reader]
+  (lazy-seq
+   (if-let [line (.readLine reader)]
+     (cons line (closing-line-seq reader))
+     (do (.close reader) nil))))
+
 (defn csv-local
-  "read in a local csv dataset"
+  "read in a local csv dataset\n
+   :data is lazy; the underlying reader closes itself when :data is fully
+   consumed, and :close closes it early if consumption stops before the end"
   [path & {:keys [sep stat wrap] :or {sep #"," stat false wrap nil}}]
-  (let [sep (if (string? sep) (clojask-io.delimiter/format-delimiter sep) sep)  
+  (let [sep (if (string? sep) (clojask-io.delimiter/format-delimiter sep) sep)
         reader (io/reader path)
-        data (line-seq reader)
+        data (closing-line-seq reader)
         data (map #(str/split % sep -1) data)
         data (if (= wrap nil)
                data
@@ -40,10 +47,11 @@
                                         (subs value wrap-len (- (count value) wrap-len))
                                         value)]
                             value))
-                        %) data)))]
+                        %) data)))
+        res {:clojask-io true :path path :data data :close (fn [] (.close reader))}]
     (if stat
-      {:clojask-io true :path path :data data :size (get-local-size path)}
-      {:clojask-io true :path path :data data})))
+      (assoc res :size (get-local-size path))
+      res)))
 
 (defn csv-online
   [path & {:keys [sep stat wrap] :or {sep #"," stat false wrap nil}}]
@@ -84,9 +92,7 @@
         ;; (catch Exception e 
         ;;   (do
         ;;     (throw (Exception. "Error in decoding the file. Make sure you specified the correct seperator." e)))))
-      ))
-  )
-
+      )))
 (defn excel-local
   [path sheet stat]
   (let [data (->> (excel/load-workbook path)
@@ -94,10 +100,11 @@
                   (excel/row-seq)
                   (remove nil?)
                   (map excel/cell-seq)
-                  (map #(map excel/read-cell %)))]
+                  (map #(map excel/read-cell %)))
+        res {:clojask-io true :path path :data data :close (fn [] nil)}]
     (if stat
-      {:clojask-io true :path path :data data :stat (get-local-size path)}
-      {:clojask-io true :path path :data data})))
+      (assoc res :stat (get-local-size path))
+      res)))
 
 (defn excel-online
   [path sheet stat]
@@ -108,10 +115,11 @@
                     (excel/row-seq)
                     (remove nil?)
                     (map excel/cell-seq)
-                    (map #(map excel/read-cell %))))]
+                    (map #(map excel/read-cell %))))
+        res {:clojask-io true :path path :data data :close (fn [] nil)}]
     (if stat
-      {:clojask-io true :path path :data data :stat (get-online-size path)}
-      {:clojask-io true :path path :data data})))
+      (assoc res :stat (get-online-size path))
+      res)))
 
 (defn read-excel
   "Read an excel sheet as a vector of vectors (not lazy).\n

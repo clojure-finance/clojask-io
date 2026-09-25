@@ -57,7 +57,7 @@ Read in a file as lazy sequence. Optionally, provide size of the file, correspon
 
 **Return**
 
-{:data `a lazy sequence of vectors representing each row` [:size `the size in byte`] [:output `output function`]}
+{:data `a lazy sequence of vectors representing each row` :close `0-arity function that closes the underlying reader (only needed if :data is not fully consumed; consuming :data to the end closes it automatically)` [:size `the size in byte`] [:output `output function`]}
 
 
 
@@ -75,7 +75,7 @@ Read in an excel file as lazy sequence. Optionally, provide size of the file.
 
 **Return**
 
-{:data `a lazy sequence of vectors representing each row` [:size `the size in byte`]}
+{:data `a lazy sequence of vectors representing each row` :close `0-arity no-op function (excel files are read eagerly; present for interface uniformity with read-file)` [:size `the size in byte`]}
 
 ----
 
