@@ -1,4 +1,4 @@
-(defproject com.github.clojure-finance/clojask-io "1.0.6"
+(defproject com.github.clojure-finance/clojask-io "1.0.7"
   :description "A Clojure library designed to extend the file support for Clojask. This library can also be used alone to read in and output dataset files."
   :url "https://clojure-finance.github.io/clojask-website"
   :license {:name "MIT"
@@ -8,4 +8,8 @@
                  [dk.ative/docjure "1.18.0"]
                  [com.netflix.pigpen/pigpen "0.3.3"]
                  [com.netflix.pigpen/pigpen-parquet-pig "0.3.3"]]
+  :deploy-repositories [["clojars" {:url "https://repo.clojars.org/"
+                                    :username :env/clojars_username
+                                    :password :env/clojars_password
+                                    :sign-releases false}]]
   :repl-options {:init-ns clojask-io.debug})
