@@ -6,6 +6,37 @@ A Clojure library designed to extend the file support for [Clojask](https://gith
 
 Available on Clojars: [![Clojars Project](https://img.shields.io/clojars/v/com.github.clojure-finance/clojask-io.svg)](https://clojars.org/com.github.clojure-finance/clojask-io)
 
+Leiningen:
+
+```clojure
+[com.github.clojure-finance/clojask-io "1.0.7"]
+```
+
+deps.edn:
+
+```clojure
+com.github.clojure-finance/clojask-io {:mvn/version "1.0.7"}
+```
+
+## Usage
+
+```clojure
+(require '[clojask-io.input :as input])
+
+;; :data is a lazy sequence of row vectors; the underlying reader closes
+;; itself when :data is fully consumed
+(let [{:keys [data]} (input/read-file "data.csv")]
+  (doseq [row data]
+    (println row)))
+
+;; if you stop before the end of the file, call :close to release the reader;
+;; :close is always present and safe to call more than once
+(let [{:keys [data close]} (input/read-file "data.csv")]
+  (let [header (first data)]
+    (close)
+    header))
+```
+
 ## APIs
 
 ### NS: clojask-io.core
@@ -63,7 +94,7 @@ Read in a file as lazy sequence. Optionally, provide size of the file, correspon
 
 #### `read-excel`
 
-Read in an excel file as lazy sequence. Optionally, provide size of the file.
+Read in an excel file as a sequence of rows (loaded eagerly, unlike `read-file`). Optionally, provide size of the file.
 
 *A simplified wrapper function of [Docjure](https://github.com/mjul/docjure). The excel file should be smaller than memory size.* 
 
@@ -75,7 +106,7 @@ Read in an excel file as lazy sequence. Optionally, provide size of the file.
 
 **Return**
 
-{:data `a lazy sequence of vectors representing each row` :close `0-arity no-op function (excel files are read eagerly; present for interface uniformity with read-file)` [:size `the size in byte`]}
+{:data `a sequence of sequences representing each row (the whole sheet is loaded into memory)` :close `0-arity no-op function (excel files are read eagerly; present for interface uniformity with read-file)` [:size `the size in byte`]}
 
 ----
 
@@ -88,7 +119,7 @@ Synchronously write a collection of collections to a csv-like file.
 | Argument    | Type                     | Function                                     | Remarks                                                      |
 | ----------- | ------------------------ | -------------------------------------------- | ------------------------------------------------------------ |
 | `writer`    | `java.io.BufferedWriter` | The writer initialized to the output file    |                                                              |
-| `sequence`  | Collection               | The output content                           | Should a two-dimensional collection                          |
+| `sequence`  | Collection               | The output content                           | Should be a two-dimensional collection                       |
 | `separator` | String                   | The separator between values in the same row |                                                               |
 
 **Implementation**
@@ -118,7 +149,7 @@ Synchronously write a collection of collections to an excel file.
 | ---------- | ---------- | --------------------------------- | --------------------------------------------- |
 | `path`     | String     | Indicates the path of output file | Absolute / relative path of local file system |
 | `sheet`    | String     | Name of the sheet                 |                                               |
-| `sequence` | Collection | The output content                | Should a two-dimensional collection           |
+| `sequence` | Collection | The output content                | Should be a two-dimensional collection        |
 
 **Return**
 
