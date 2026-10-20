@@ -1,20 +1,22 @@
 (ns clojask-io.input
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
-            [jdk.net.URL :refer [->url open-connection]]
-            [jdk.net.URLConnection :refer [get-content-length]]
             [clojask-io.output :refer :all]
             [clojask-io.core :refer :all]
             [clojask-io.delimiter]
             [dk.ative.docjure.spreadsheet :as excel]))
 
 (defn- get-online-size
-  "get the size of the response file"
+  "get the size of the response file, nil if the server does not report it"
   [url]
   (try
-    (let [url (->url url)
-          conn (open-connection url)]
-      (get-content-length conn))
+    (let [conn (.openConnection (.toURL (java.net.URI. url)))]
+      (try
+        (let [size (.getContentLengthLong conn)]
+          (when-not (neg? size) size))
+        (finally
+          (when (instance? java.net.HttpURLConnection conn)
+            (.disconnect ^java.net.HttpURLConnection conn)))))
     (catch Exception e nil)))
 
 (defn- get-local-size
@@ -43,9 +45,10 @@
                (let [wrap-len (count wrap)]
                  (map #(mapv
                         (fn [value]
-                          (let [value (if (and (str/ends-with? value wrap) (str/starts-with? value wrap))
-                                        (subs value wrap-len (- (count value) wrap-len))
-                                        value)]
+                          (if (and (>= (count value) (* 2 wrap-len))
+                                   (str/starts-with? value wrap)
+                                   (str/ends-with? value wrap))
+                            (subs value wrap-len (- (count value) wrap-len))
                             value))
                         %) data)))
         res {:clojask-io true :path path :data data :close (fn [] (.close reader))}]
@@ -65,34 +68,29 @@
   (or (str/starts-with? path "https://") (str/starts-with? path "http://")))
 
 (defn read-file
-  "Lazily read a dataset file (csv, txt, dat, tsv, tab) into a vector of vectors"
+  "Lazily read a dataset file (csv, txt, dat, tsv, tab) as a sequence of row vectors.\n
+   The separator is :sep if given, else the default of the format, else
+   inferred from the file content, else \",\""
   [path & {:keys [sep format stat wrap output] :or {sep nil format nil stat false wrap nil output false}}]
-  (let [format (or format (infer-format path))
-        sep (or sep (clojask-io.delimiter/get-delimiter path) (get format-sep-map format) ",")]
-    (if (.contains ["piquet" "dta"] format)
-      ;; not supported type
-      (do
-        (throw (Exception. (str "ERROR: The file format " format " is not supported.")))
-        nil)
-      ;; ["csv" "txt" "dat" "tsv" "tab" nil]
-      ;; (try
-      (if (.contains excel-format format)
-        (do
-          (throw (Exception. (str "ERROR: The file format " format " is not supported. Please try using function read-excel.")))
-          nil)
-        (do
-          (if (or (= format nil) (not (.contains gen-format format))) (println "WARNING: The format of the file cannot be inferred. Use \"csv\" by default"))
-          (if (or (is-online path))
-            (if output
-              (assoc (csv-online path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
-              (csv-online path :sep sep :stat stat :wrap wrap))
-            (if output
-              (assoc (csv-local path :sep sep :stat stat :wrap wrap) :output (fn [wtr seq] (write-csv wtr seq sep)))
-              (csv-local path :sep sep :stat stat :wrap wrap)))))
-        ;; (catch Exception e 
-        ;;   (do
-        ;;     (throw (Exception. "Error in decoding the file. Make sure you specified the correct seperator." e)))))
-      )))
+  (let [format (or format (infer-format path))]
+    (cond
+      (.contains ["parquet" "dta"] format)
+      (throw (Exception. (str "ERROR: The file format " format " is not supported.")))
+
+      (.contains excel-format format)
+      (throw (Exception. (str "ERROR: The file format " format " is not supported. Please try using function read-excel.")))
+
+      :else
+      (let [sep (or sep (get format-sep-map format) (clojask-io.delimiter/get-delimiter path) ",")
+            _ (when-not (.contains gen-format format)
+                (println (str "WARNING: The format of the file cannot be inferred. Reading it as csv with separator " (pr-str sep))))
+            res (if (is-online path)
+                  (csv-online path :sep sep :stat stat :wrap wrap)
+                  (csv-local path :sep sep :stat stat :wrap wrap))]
+        (if output
+          (let [out-sep (if (string? sep) sep (get format-output-sep-map format ","))]
+            (assoc res :output (fn [wtr seq] (write-csv wtr seq out-sep))))
+          res)))))
 
 (defn excel-local
   [path sheet stat]
@@ -104,13 +102,12 @@
                   (map #(map excel/read-cell %)))
         res {:clojask-io true :path path :data data :close (fn [] nil)}]
     (if stat
-      (assoc res :stat (get-local-size path))
+      (assoc res :size (get-local-size path))
       res)))
 
 (defn excel-online
   [path sheet stat]
-  (let [url (->url path)
-        data (with-open [stream (io/input-stream url)]
+  (let [data (with-open [stream (io/input-stream path)]
                (->> (excel/load-workbook stream)
                     (excel/select-sheet sheet)
                     (excel/row-seq)
@@ -119,11 +116,11 @@
                     (map #(map excel/read-cell %))))
         res {:clojask-io true :path path :data data :close (fn [] nil)}]
     (if stat
-      (assoc res :stat (get-online-size path))
+      (assoc res :size (get-online-size path))
       res)))
 
 (defn read-excel
-  "Read an excel sheet as a vector of vectors (not lazy).\n
+  "Read an excel sheet as a sequence of rows; the whole workbook is loaded into memory.\n
    More specified input can be found in https://github.com/mjul/docjure ."
   [path sheet & {:keys [stat] :or {stat false}}]
   (if (is-online path)

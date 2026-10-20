@@ -47,7 +47,7 @@ Check if this library supports to read and write this format of file.
 
 | Argument | Type   | Function                                                     | Remarks |
 | -------- | ------ | ------------------------------------------------------------ | ------- |
-| `format` | String | Indicates the format of type, e.g. "csv", "xls", "txt", etc. |         |
+| `format` | String | Indicates the format of type, e.g. "csv", "xls", "txt", etc. | `nil` (unknown format) counts as supported: it is read as csv |
 
 **Return**
 
@@ -57,7 +57,7 @@ Boolean
 
 #### `infer-format`
 
-Infer the file format from the path (get the substring after the last `.`).
+Infer the file format from the path (the substring after the last `.` of the file name).
 
 | Argument | Type   | Function                                                     | Remarks                                                      |
 | -------- | ------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -81,10 +81,10 @@ Read in a file as lazy sequence. Optionally, provide size of the file, correspon
 | ---------- | ---------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | `path`     | String                                   | Indicates where to find the file (either on local machine or online) | - For local files, absolute / relative path of the file<br/>- For online resources, url of the resources |
 | [`format`] | String                                   | The format of the file                                       | Will be inferred from the path suffix if not provided. Will imply the separator (`sep`) based on pre-setting. |
-| [`sep`]    | String / java.util.regex.Pattern (regex) | The separator of each row of the dataset file                |                                                              |
+| [`sep`]    | String / java.util.regex.Pattern (regex) | The separator of each row of the dataset file                | A String is matched literally, a Pattern as a regex. If not provided: the default of the format (csv `","`, txt `", "`, dat one or more spaces, tsv / tab `"\t"`); for other formats it is inferred from the first 1000 lines, falling back to `","`. |
 | [`wrap`]   | String                                   | Wrapper of each value                                        | Sometimes, the file will wrap each value some punctuations, e.g `""` / `''`. Can remove them automatically by setting this argument. Does not support asymmetric wrappers. |
 | [`stat`]   | Boolean                                  | Whether to get the size of the file                          | If true, the return value will add a :size key-value pair in unit of bytes. Size value will be `nil` if cannot be retrieved. |
-| [`output`] | Boolean                                  | Whether to also return the corresponding output function     | If true, the return value will add a :output key-value pair. |
+| [`output`] | Boolean                                  | Whether to also return the corresponding output function     | If true, the return value will add a :output key-value pair. The output function writes with the same separator (a regex separator writes `","`, or one space for dat). |
 
 **Return**
 
@@ -120,7 +120,7 @@ Synchronously write a collection of collections to a csv-like file.
 | ----------- | ------------------------ | -------------------------------------------- | ------------------------------------------------------------ |
 | `writer`    | `java.io.BufferedWriter` | The writer initialized to the output file    |                                                              |
 | `sequence`  | Collection               | The output content                           | Should be a two-dimensional collection                       |
-| `separator` | String                   | The separator between values in the same row |                                                               |
+| `separator` | String                   | The separator between values in the same row |                                                              |
 
 **Implementation**
 
@@ -129,8 +129,7 @@ Synchronously write a collection of collections to a csv-like file.
   "output to a csv file using a collection of collections"
   [writer seq sep]
   (doseq [row seq]
-    (.write writer (str (str/join sep row) "\n"))
-    ))
+    (.write writer (str (str/join sep row) "\n"))))
 ```
 
 **Return**
