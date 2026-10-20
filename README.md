@@ -9,13 +9,13 @@ Available on Clojars: [![Clojars Project](https://img.shields.io/clojars/v/com.g
 Leiningen:
 
 ```clojure
-[com.github.clojure-finance/clojask-io "1.0.7"]
+[com.github.clojure-finance/clojask-io "1.0.8"]
 ```
 
 deps.edn:
 
 ```clojure
-com.github.clojure-finance/clojask-io {:mvn/version "1.0.7"}
+com.github.clojure-finance/clojask-io {:mvn/version "1.0.8"}
 ```
 
 ## Usage
