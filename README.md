@@ -156,4 +156,4 @@ Synchronously write a collection of collections to an excel file.
 
 -----------------------
 
-Copyright © 2022 Clojask-io
+Copyright © 2022-2026 Matthias Buehlmaier
